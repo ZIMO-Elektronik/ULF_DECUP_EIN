@@ -1,5 +1,6 @@
 # ULF_DECUP_EIN
 
+
 ULF_DECUP_EIN is a protocol for updating both firmware and sound data on ZIMO MX decoders over the PC. This protocol gives direct access to the MXULF track outputs. Data sent by the host PC is used as input for the so-called unipolar track signal. After each packet, the MXULF checks if the decoder has given a response to the packets, and the response is sent back to the host.
 
 It is up to the host the manage the update process in such a way that a sound or firmware update is successful. For this a description of the basic layout of a data packet, the used commands, and the usual workflow of a sound or firmware update is provided in the following paragraphs.
@@ -93,4 +94,7 @@ Response is interpreted as single byte value. If the read value equals 1, the de
 | --- |--- |--- |--- |--- |--- |
 | Command 3 | 85 | Blocknumber high | Blocknumber low | 256 bytes sound data | XOR |
 
+
+=======
+<img src="data/images/logo.png" width="20%" align="right">
 
