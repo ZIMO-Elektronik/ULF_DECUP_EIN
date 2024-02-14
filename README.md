@@ -1,8 +1,8 @@
 # ULF_DECUP_EIN
 
-ULF_DECUP_EIN is a protocoll for updating both firmware and sound data on ZIMO MX decoders over the PC. This protocoll gives direct access to the MXULF track outputs. Data sent by the Host PC is used as input for the so-called unipolar track signal. After each packet, the MXULF checks if the decoder has given a response to the packets, and the response is sent back to the host.
+ULF_DECUP_EIN is a protocol for updating both firmware and sound data on ZIMO MX decoders over the PC. This protocol gives direct access to the MXULF track outputs. Data sent by the host PC is used as input for the so-called unipolar track signal. After each packet, the MXULF checks if the decoder has given a response to the packets, and the response is sent back to the host.
 
-It is up to the host the mangage the update process in such a way that a sound or firmware update is successfull. For this a description of the basic layout of a data packet, the used commands, and the usual workflow of a sound or firmware update is provided in the following paragraphs.
+It is up to the host the manage the update process in such a way that a sound or firmware update is successful. For this a description of the basic layout of a data packet, the used commands, and the usual workflow of a sound or firmware update is provided in the following paragraphs.
 
 ## Unipolar data packet
 
@@ -15,7 +15,7 @@ Each byte is made up of a logical zero startbit, followed by the regular zero an
 
 After each packet, the decoder can give a response. There three response types:
 
-| ACK | NACK | No reponse |
+| ACK | NACK | No response |
 |---|---|---|
 | long response| short response | nothing
 
@@ -29,11 +29,11 @@ After each packet, the decoder can give a response. There three response types:
 | ---| --- |
 
 ### Startbyte
-The so called Startbyte contained in the zsu Updatefile is sent as a byte packet to select the given decoder. ACK is expected a for successful selection.
+The so called startbyte contained in the zsu updatefile is sent as a byte packet to select the given decoder. ACK is expected for a successful selection.
 
 ### Blocklength byte
 
-Contains the number of Flashblocks to be written. Both ACK and NACK are accepted.
+Contains the number of flashblocks to be written. Both ACK and NACK are accepted.
 
 ### Security Byte 1
 
@@ -46,27 +46,27 @@ Byte 0xAA
 ### Data
 The main firmware data packet is made up of the block count, the data frame, and and XOR checksum for the preceding bytes.
 
-| Blockcount Byte | 32 or 64 Bytes Data Frame | XOR |
+| Blockcount Byte | 32 or 64 bytes data frame | XOR |
 | --- | --- | --- |
 
 ## Sound update packets
 
-### Preambel
+### Preamble
 
 | 191 | 239 | 239 |
 | --- | --- | --- |
 
 ### Read CV
 
-| Cmd Byte | Address High | Address Low |
-|--- |
+| Cmd Byte | Address high | Address low |
+| --- | --- | --- |
 | 1 |  | |
 
 ### Write CV
 
-| 6 | 0xAA | Address High | Address Low | Checksum CRC8 | Value |
-| --- |--- |--- |--- |--- |--- |--- |
-| 2 | 0xAA | Address High | Address Low | Value |
+| 6 | 0xAA | Address high | Address low | Checksum CRC8 | Value |
+| --- |--- |--- |--- |--- |--- |
+| 2 | 0xAA | Address high | Address low | Value |
 
 ### Delete Flash
 
@@ -78,19 +78,19 @@ The main firmware data packet is made up of the block count, the data frame, and
 | 4 |
 | ---|
 
-Response is interpreted as singe byte value. Valid response ( != 0) marks the completion flash memory erasure.
+Response is interpreted as single byte value. Valid response ( != 0) marks the completion flash memory erasure.
 
 ### CRC or XOR Query
 
 | 7 |
 | ---|
 
-Response is interpreted as singe byte value. If the read value equals 1, the decoder will expect a CRC8 checksum, otherwise an XOR checksum has to be calculated.
+Response is interpreted as single byte value. If the read value equals 1, the decoder will expect a CRC8 checksum, otherwise an XOR checksum has to be calculated.
 
 ### Data Packet
 
-| Command 5 | 85 | Blocknumber High | Blocknumber Low | 256 Bytes Sound Data | CRC8 |
+| Command 5 | 85 | Blocknumber high | Blocknumber low | 256 bytes sound data | CRC8 |
 | --- |--- |--- |--- |--- |--- |
-| Command 3 | 85 | Blocknumber High | Blocknumber Low | 256 Bytes Sound Data | XOR |
+| Command 3 | 85 | Blocknumber high | Blocknumber low | 256 bytes sound data | XOR |
 
 
