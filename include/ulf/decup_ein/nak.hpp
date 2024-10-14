@@ -4,8 +4,16 @@
 
 ///
 ///
-/// \file   ulf/decup_ein/bytes2packet.hpp
+/// \file   ulf/decup_ein/nak.hpp
 /// \author Vincent Hamp
-/// \date   12/08/2024
+/// \date   18/08/2024
 
-namespace ulf::decup_ein {}  // namespace ulf::decup_ein
+#pragma once
+
+#include <cstdint>
+
+namespace ulf::decup_ein {
+
+inline constexpr uint8_t nak{0xFCu};
+
+}  // namespace ulf::decup_ein

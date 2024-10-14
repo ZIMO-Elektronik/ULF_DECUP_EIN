@@ -10,4 +10,6 @@
 
 #pragma once
 
+#include "decup_ein/ack.hpp"
 #include "decup_ein/bytes2packet.hpp"
+#include "decup_ein/nak.hpp"
