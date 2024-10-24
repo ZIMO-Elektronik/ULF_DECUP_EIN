@@ -18,10 +18,14 @@ namespace ulf::decup_ein::rx {
 //
 class Base {
 public:
+  /// Dtor
+  virtual constexpr ~Base() = default;
+
   std::optional<uint8_t> receive(uint8_t byte);
 
 private:
   virtual uint8_t transmit(std::span<uint8_t const> bytes) = 0;
+  virtual void done() = 0;
 
   void reset();
 

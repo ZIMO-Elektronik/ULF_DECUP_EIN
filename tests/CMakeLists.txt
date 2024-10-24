@@ -18,8 +18,9 @@ cpmaddpackage(
   YES
   OPTIONS
   "INSTALL_GTEST OFF")
+cpmaddpackage("gh:ZIMO-Elektronik/ZSU@0.1.0")
 
-target_link_libraries(ULF_DECUP_EINTests PRIVATE ULF::DECUP_EIN
-                                                 GTest::gtest_main GTest::gmock)
+target_link_libraries(ULF_DECUP_EINTests PRIVATE GTest::gtest_main GTest::gmock
+                                                 ULF::DECUP_EIN ZSU::ZSU)
 
 gtest_discover_tests(ULF_DECUP_EINTests)
