@@ -19,6 +19,7 @@ cpmaddpackage(
   OPTIONS
   "INSTALL_GTEST OFF")
 
-target_link_libraries(ULF_DECUP_EINTests PRIVATE GTest::gtest_main GTest::gmock)
+target_link_libraries(ULF_DECUP_EINTests PRIVATE ULF::DECUP_EIN
+                                                 GTest::gtest_main GTest::gmock)
 
 gtest_discover_tests(ULF_DECUP_EINTests)

@@ -14,18 +14,31 @@ project(
   VERSION ${VERSION_FROM_GIT}
   LANGUAGES CXX)
 
-add_library(ULF_DECUP_EIN INTERFACE ${SRC})
+file(GLOB_RECURSE SRC src/*.cpp)
+add_library(ULF_DECUP_EIN STATIC ${SRC})
 add_library(ULF::DECUP_EIN ALIAS ULF_DECUP_EIN)
 
 target_compile_features(ULF_DECUP_EIN INTERFACE cxx_std_23)
 
 if(PROJECT_IS_TOP_LEVEL)
-  target_include_directories(ULF_DECUP_EIN INTERFACE include)
+  target_include_directories(
+    ULF_DECUP_EIN
+    INTERFACE include
+    PRIVATE include/ulf/decup_ein)
 else()
-  target_include_directories(ULF_DECUP_EIN SYSTEM INTERFACE include)
+  target_include_directories(
+    ULF_DECUP_EIN SYSTEM
+    INTERFACE include
+    PRIVATE include/ulf/decup_ein)
 endif()
 
-target_common_warnings(ULF_DECUP_EIN INTERFACE)
+target_common_warnings(ULF_DECUP_EIN PRIVATE)
+
+if(NOT TARGET DECUP::DECUP)
+  cpmaddpackage("gh:ZIMO-Elektronik/DECUP#develop")
+endif()
+
+target_link_libraries(ULF_DECUP_EIN PUBLIC DECUP::DECUP)
 
 if(PROJECT_IS_TOP_LEVEL)
   include(CTest)
