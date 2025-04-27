@@ -4,16 +4,23 @@
 
 ///
 ///
-/// \file   ulf/decup_ein/ack.hpp
+/// \file   ulf/decup_ein/nak.hpp
 /// \author Vincent Hamp
 /// \date   18/08/2024
 
 #pragma once
 
 #include <cstdint>
+#include <optional>
+#include "ack.hpp"
+#include "nak.hpp"
 
 namespace ulf::decup_ein {
 
-inline constexpr uint8_t ack{0x1Cu};
+constexpr std::optional<uint8_t> pulse_count2response(size_t pulse_count) {
+  if (pulse_count == 1uz) return nak;
+  else if (pulse_count == 2uz) return ack;
+  else return std::nullopt;
+}
 
 } // namespace ulf::decup_ein
