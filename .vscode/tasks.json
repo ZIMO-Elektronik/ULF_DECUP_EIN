@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run ULF_DECUP_EINTests",
+      "type": "shell",
+      "isBackground": true,
+      "command": "./build/tests/ULF_DECUP_EINTests"
+    },
+  ]
+}
