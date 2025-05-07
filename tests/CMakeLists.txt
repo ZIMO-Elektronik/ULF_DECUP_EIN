@@ -7,17 +7,7 @@ sanitize(address,undefined)
 
 target_common_warnings(ULF_DECUP_EINTests PRIVATE)
 
-cpmaddpackage(
-  NAME
-  googletest
-  GITHUB_REPOSITORY
-  "google/googletest"
-  GIT_TAG
-  main
-  SYSTEM
-  YES
-  OPTIONS
-  "INSTALL_GTEST OFF")
+cpmaddpackage(URI "gh:google/googletest#main" OPTIONS "INSTALL_GTEST OFF")
 cpmaddpackage("gh:ZIMO-Elektronik/ZSU@0.1.1")
 
 target_link_libraries(ULF_DECUP_EINTests PRIVATE GTest::gtest_main GTest::gmock
