@@ -35,7 +35,7 @@ endif()
 target_common_warnings(ULF_DECUP_EIN PRIVATE)
 
 if(NOT TARGET DECUP::DECUP)
-  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.1")
+  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.3")
 endif()
 
 if(NOT TARGET Microsoft.GSL::GSL)

@@ -10,8 +10,10 @@ RxTest& RxTest::Zsu(std::filesystem::path path) {
   return *this;
 }
 
-RxTest& RxTest::Preamble(size_t count) {
-  for (auto i{0uz}; i < count; ++i) _mock.receive(0xEFu);
+RxTest& RxTest::ZsuPreamble(size_t count) {
+  for (auto i{0uz}; i < count; ++i)
+    _mock.receive(std::to_underlying(count % 2uz ? decup::Command::Preamble0
+                                                 : decup::Command::Preamble1));
   return *this;
 }
 

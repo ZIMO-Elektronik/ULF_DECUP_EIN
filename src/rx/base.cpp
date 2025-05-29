@@ -37,7 +37,8 @@ std::optional<uint8_t> Base::entry(uint8_t byte) {
 ///
 std::optional<uint8_t> Base::preamble(uint8_t byte) {
   //
-  if (byte == 0xEFu || byte == 0xBFu)
+  if (byte == std::to_underlying(decup::Command::Preamble0) ||
+      byte == std::to_underlying(decup::Command::Preamble1))
     return pulse_count2response(transmit({&byte, sizeof(byte)}));
   //
   else if (byte < 0x80u) {

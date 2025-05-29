@@ -13,7 +13,7 @@ struct RxTest : ::testing::Test {
   virtual ~RxTest();
 
   RxTest& Zsu(std::filesystem::path path);
-  RxTest& Preamble(size_t count);
+  RxTest& ZsuPreamble(size_t count);
   RxTest& ZsuDecoderId(uint8_t decoder_id);
   RxTest& ZsuBlockCount();
   RxTest& ZsuSecurityByte1();
