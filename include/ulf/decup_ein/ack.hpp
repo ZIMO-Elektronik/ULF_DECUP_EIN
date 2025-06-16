@@ -14,6 +14,8 @@
 
 namespace ulf::decup_ein {
 
-inline constexpr uint8_t ack{0x1Cu};
+using Ack = uint8_t;
+
+inline constexpr Ack ack{0x1Cu};
 
 } // namespace ulf::decup_ein

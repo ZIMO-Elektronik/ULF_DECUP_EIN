@@ -14,6 +14,8 @@
 
 namespace ulf::decup_ein {
 
-inline constexpr uint8_t nak{0xFCu};
+using Nak = uint8_t;
+
+inline constexpr Nak nak{0xFCu};
 
 } // namespace ulf::decup_ein
