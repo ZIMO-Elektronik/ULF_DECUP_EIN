@@ -6,6 +6,7 @@ add_executable(ULF_DECUP_EINTests ${SRC})
 sanitize(address,undefined)
 
 target_common_warnings(ULF_DECUP_EINTests PRIVATE)
+target_common_errors(ULF_DECUP_EINTests PRIVATE -Werror)
 
 cpmaddpackage(URI "gh:google/googletest#main" OPTIONS "INSTALL_GTEST OFF")
 cpmaddpackage("gh:ZIMO-Elektronik/ZSU@0.1.1")
