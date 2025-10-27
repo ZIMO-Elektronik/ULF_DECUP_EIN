@@ -23,7 +23,7 @@ RxTest& RxTest::ZsuDecoderId(uint8_t decoder_id) {
     .WillOnce(Return(2u))
     .RetiresOnSaturation();
   auto it{std::ranges::find_if(_zsu.firmwares, [this](auto&& fw) {
-    return _mock.receive(fw.id) == ulf::decup_ein::ack;
+    return _mock.receive(static_cast<uint8_t>(fw.id)) == ulf::decup_ein::ack;
   })};
   if (it != cend(_zsu.firmwares)) _fw = *it;
   return *this;
@@ -58,7 +58,7 @@ RxTest& RxTest::ZsuBlocks() {
   EXPECT_CALL(_mock, transmit(_))
     .Times(Exactly(836))
     .WillRepeatedly(Return(2u));
-  auto count{0uz};
+  uint8_t count{0u};
   for (auto chunk : _fw.bin | std::views::chunk(decup::decoder_id2data_size(
                                 static_cast<uint8_t>(_fw.id)))) {
     _mock.receive(count);

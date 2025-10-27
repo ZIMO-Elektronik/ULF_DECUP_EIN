@@ -4,7 +4,7 @@ include(FetchContent)
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.9.5
+  GIT_TAG v0.10.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -20,11 +20,14 @@ add_library(ULF::DECUP_EIN ALIAS ULF_DECUP_EIN)
 
 target_compile_features(ULF_DECUP_EIN INTERFACE cxx_std_23)
 
-if(PROJECT_IS_TOP_LEVEL)
+# https://github.com/espressif/esp-idf/issues/17773
+if(PROJECT_IS_TOP_LEVEL AND NOT ESP_PLATFORM)
   target_include_directories(
     ULF_DECUP_EIN
     INTERFACE include
     PRIVATE include/ulf/decup_ein)
+  target_common_warnings(ULF_DECUP_EIN PRIVATE)
+  target_common_errors(ULF_DECUP_EIN PRIVATE)
 else()
   target_include_directories(
     ULF_DECUP_EIN SYSTEM
@@ -32,10 +35,8 @@ else()
     PRIVATE include/ulf/decup_ein)
 endif()
 
-target_common_warnings(ULF_DECUP_EIN PRIVATE)
-
 if(NOT TARGET DECUP::DECUP)
-  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.3")
+  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.4")
 endif()
 
 if(NOT TARGET Microsoft.GSL::GSL)
