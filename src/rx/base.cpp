@@ -86,8 +86,8 @@ std::optional<uint8_t> Base::zpp(uint8_t byte) {
     case 0x01u: _state = &Base::zppReadCv; return zppReadCv(byte);
     case 0x02u: [[fallthrough]];
     case 0x06u: _state = &Base::zppWriteCv; return zppWriteCv(byte);
-    case 0x03u: [[fallthrough]];
-    case 0x05u: _state = &Base::zppFlash; return zppFlash(byte);
+    case 0x03u: _state = &Base::zppFlashErase; return zppFlashErase(byte);
+    case 0x05u: _state = &Base::zppFlashWrite; return zppFlashWrite(byte);
     case 0x04u: _state = &Base::zppDecoderId; return zppDecoderId(byte);
     case 0x07u: _state = &Base::zppCrcXorQuery; return zppCrcXorQuery(byte);
   }
@@ -137,7 +137,8 @@ std::optional<uint8_t> Base::zppWriteCv(uint8_t byte) {
 /// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zppFlashErase(uint8_t byte) {
   _packet.push_back(byte);
-  if (_packet[1uz] == 0x55u && _packet[2uz] == 0xFFu && _packet[3uz] == 0xFFu) {
+  if (size(_packet) == 4u && _packet[1uz] == 0x55u && _packet[2uz] == 0xFFu &&
+      _packet[3uz] == 0xFFu) {
     _state = &Base::zpp;
     return pulse_count2response(transmit(_packet, 200u * 1000u)); // 200s
   }
