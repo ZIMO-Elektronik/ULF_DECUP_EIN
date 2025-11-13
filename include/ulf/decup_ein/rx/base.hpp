@@ -15,7 +15,11 @@
 
 namespace ulf::decup_ein::rx {
 
-//
+/// Rx Base class
+///
+/// @details
+/// Pass data into the @ref receive(uint8_t) method to use. Doing this may
+/// result in a call to transmit()
 class Base {
 public:
   /// Dtor
@@ -24,7 +28,13 @@ public:
   std::optional<uint8_t> receive(uint8_t byte);
 
 private:
-  virtual uint8_t transmit(std::span<uint8_t const> bytes) = 0;
+  /// Transmit bytes
+  ///
+  /// \param bytes Bytes
+  /// \param time  Response time frame [ms]
+  /// \return Pulse count
+  virtual uint8_t transmit(std::span<uint8_t const> bytes,
+                           size_t const time) = 0;
 
   std::optional<uint8_t> entry(uint8_t byte);
   std::optional<uint8_t> preamble(uint8_t byte);
@@ -32,7 +42,8 @@ private:
   std::optional<uint8_t> zpp(uint8_t byte);
   std::optional<uint8_t> zppReadCv(uint8_t byte);
   std::optional<uint8_t> zppWriteCv(uint8_t byte);
-  std::optional<uint8_t> zppFlash(uint8_t byte);
+  std::optional<uint8_t> zppFlashErase(uint8_t byte);
+  std::optional<uint8_t> zppFlashWrite(uint8_t byte);
   std::optional<uint8_t> zppDecoderId(uint8_t byte);
   std::optional<uint8_t> zppCrcXorQuery(uint8_t byte);
 

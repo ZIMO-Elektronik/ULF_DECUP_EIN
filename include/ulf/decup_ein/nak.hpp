@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-///
+/// Nak
 ///
 /// \file   ulf/decup_ein/nak.hpp
 /// \author Vincent Hamp
@@ -16,6 +16,7 @@ namespace ulf::decup_ein {
 
 using Nak = uint8_t;
 
+/// Nak
 inline constexpr Nak nak{0xFCu};
 
 } // namespace ulf::decup_ein

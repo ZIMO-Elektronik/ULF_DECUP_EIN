@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-///
+/// Pulse count to response
 ///
 /// \file   ulf/decup_ein/nak.hpp
 /// \author Vincent Hamp
@@ -17,6 +17,10 @@
 
 namespace ulf::decup_ein {
 
+/// Pulse count to response
+///
+/// \param pulse_count Pulse count
+/// \return Response
 constexpr std::optional<uint8_t> pulse_count2response(size_t pulse_count) {
   if (pulse_count == 1uz) return nak;
   else if (pulse_count == 2uz) return ack;

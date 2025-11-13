@@ -16,17 +16,29 @@
 #include "ack.hpp"
 #include "nak.hpp"
 #include "pulse_count2response.hpp"
+#include "window.hpp"
 
 namespace ulf::decup_ein::rx {
 
 using namespace std::literals;
 
+/// Receive single byte (from e.g. USB)
 ///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::receive(uint8_t byte) {
   return std::invoke(_state, this, byte);
 }
 
+/// Entry
 ///
+/// @details
+/// Skips additional DECUP_EIN strings should they occur
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::entry(uint8_t byte) {
   // Ignore entry string which might occur multiple times...
   if ("DECUP_EIN\r"sv.contains(static_cast<char>(byte))) return std::nullopt;
@@ -34,25 +46,40 @@ std::optional<uint8_t> Base::entry(uint8_t byte) {
   return preamble(byte);
 }
 
+/// Preamble
 ///
+/// \details
+/// Transmit any preamble, continue with either zpp or zsu
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::preamble(uint8_t byte) {
-  //
+  // Still Preamble?
   if (byte == std::to_underlying(decup::Command::Preamble0) ||
       byte == std::to_underlying(decup::Command::Preamble1))
-    return pulse_count2response(transmit({&byte, sizeof(byte)}));
-  //
+    return pulse_count2response(
+      transmit({&byte, sizeof(byte)}, times::zpp_preamble));
+  // Continue wiht ZPP
   else if (byte < 0x80u) {
     _state = &Base::zpp;
     return zpp(byte);
   }
-  //
+  // Continue with ZSU
   else {
     _state = &Base::zsuDecoderId;
     return zsuDecoderId(byte);
   }
 }
 
-/// ZPP Klump hat fast sowas wie Kommandos...
+/// ZPP
+///
+/// \details
+/// \note ---> [Command]
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zpp(uint8_t byte) {
   _packet.clear();
   switch (byte) {
@@ -67,58 +94,114 @@ std::optional<uint8_t> Base::zpp(uint8_t byte) {
   return std::nullopt;
 }
 
-/// \todo
+/// ZPP Read Cv
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zppReadCv(uint8_t byte) {
   _packet.push_back(byte);
   if (size(_packet) < 3uz) return std::nullopt;
-  else if (size(_packet) == 3uz) return pulse_count2response(transmit(_packet));
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  else if (size(_packet) == 3uz)
+    return pulse_count2response(transmit(_packet, times::zpp_cv_read));
+  auto const pulse_count{transmit({&byte, sizeof(byte)}, 1u)};
   if (size(_packet) == 3uz + CHAR_BIT - 1uz) _state = &Base::zpp;
   return pulse_count2response(pulse_count);
 }
 
-/// \todo
+/// ZPP Write Cv
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zppWriteCv(uint8_t byte) {
   _packet.push_back(byte);
   if ((size(_packet) == 5uz && _packet[0uz] == 0x02u) ||
       (size(_packet) == 6uz && _packet[0uz] == 0x06u)) {
     _state = &Base::zpp;
-    return pulse_count2response(transmit(_packet));
+    return pulse_count2response(transmit(_packet, times::zpp_cv_write));
   }
   return std::nullopt;
 }
 
-/// \todo
-std::optional<uint8_t> Base::zppFlash(uint8_t byte) {
+/// ZPP Erase Flash
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
+std::optional<uint8_t> Base::zppFlashErase(uint8_t byte) {
   _packet.push_back(byte);
-  if ((size(_packet) == 4uz && _packet[0uz] == 0x03u && _packet[1uz] == 0x55u &&
-       _packet[2uz] == 0xFFu && _packet[3uz] == 0xFFu) ||
-      size(_packet) == DECUP_MAX_PACKET_SIZE) {
+  if (_packet[1uz] == 0x55u && _packet[2uz] == 0xFFu && _packet[3uz] == 0xFFu) {
     _state = &Base::zpp;
-    return pulse_count2response(transmit(_packet));
+    return pulse_count2response(transmit(_packet, 200u * 1000u)); // 200s
   }
   return std::nullopt;
 }
 
-/// \todo
+/// ZPP Write Flash
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
+std::optional<uint8_t> Base::zppFlashWrite(uint8_t byte) {
+  _packet.push_back(byte);
+  if (size(_packet) == DECUP_MAX_PACKET_SIZE) {
+    _state = &Base::zpp;
+    return pulse_count2response(transmit(_packet, times::zpp_flash_write));
+  }
+  return std::nullopt;
+}
+
+/// ZPP Decoder ID
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zppDecoderId(uint8_t byte) {
   _packet.push_back(byte);
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zpp_decoder_id)};
   if (size(_packet) == 1uz + CHAR_BIT - 1uz) _state = &Base::zpp;
   return pulse_count2response(pulse_count);
 }
 
-/// \todo
+/// ZPP CRC or XOR Query
+///
+/// \deprecated This command is deprecated, use with care
+///
+/// \note After transmission ---> ZPP
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zppCrcXorQuery(uint8_t byte) {
   _packet.push_back(byte);
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zpp_crc_or_xor)};
   if (size(_packet) == 1uz + CHAR_BIT - 1uz) _state = &Base::zpp;
   return pulse_count2response(pulse_count);
 }
 
-/// Doppelpuls -> Blockcount
+/// ZSU Decoder ID
+///
+/// \note Double pulse ---> ZSU block count
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zsuDecoderId(uint8_t byte) {
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zsu_decoder_id)};
   if (pulse_count == 2u) {
     _state = &Base::zsuBlockCount;
     _decoder_id = byte;
@@ -126,9 +209,16 @@ std::optional<uint8_t> Base::zsuDecoderId(uint8_t byte) {
   return pulse_count2response(pulse_count);
 }
 
-/// Einfachpuls -> SecurityByte1
+/// ZSU block count
+///
+/// \note Single pulse ---> ZSU SecutityByte 1
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zsuBlockCount(uint8_t byte) {
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zsu_block_count)};
   if (pulse_count == 1u) {
     _state = &Base::zsuSecurityByte1;
     assert(byte > 8u + 1u);
@@ -138,24 +228,46 @@ std::optional<uint8_t> Base::zsuBlockCount(uint8_t byte) {
   return pulse_count2response(pulse_count);
 }
 
-// Einfachpuls -> SecurityByte2
+/// ZSU SecurityByte 1
+///
+/// \note Single pulse ---> ZSU SecurityByte2
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zsuSecurityByte1(uint8_t byte) {
   if (byte != 0x55u) return reset();
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zsu_security_bytes)};
   if (pulse_count == 1u) _state = &Base::zsuSecurityByte2;
   return pulse_count2response(pulse_count);
 }
 
-/// Einfachpuls -> Data32/64
+/// ZSU SecurityByte 2
+///
+/// \note Single pulse ---> ZSU Blocks
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zsuSecurityByte2(uint8_t byte) {
   if (byte != 0xAAu) return reset();
-  auto const pulse_count{transmit({&byte, sizeof(byte)})};
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, times::zsu_security_bytes)};
   if (pulse_count == 1u) _state = &Base::zsuBlocks;
   return pulse_count2response(pulse_count);
 }
 
-// Doppelpuls -> nächstes Paket
-// Einfachpuls -> letztes Paket wiederholen
+/// ZSU Blocks
+///
+/// \details Depending on ID, either 32 or 64 Byte blocks are transmitted
+///
+/// \note Double pulse ---> Next packet
+/// \note Single pulse ---> Repeat packet
+///
+/// \param [in] byte Byte
+/// \retval std::optional  No result (yet)
+/// \retval uint8_t        Pulse count
 std::optional<uint8_t> Base::zsuBlocks(uint8_t byte) {
   _packet.push_back(byte);
 
@@ -166,7 +278,7 @@ std::optional<uint8_t> Base::zsuBlocks(uint8_t byte) {
   // Whatever happens after that, clear the packet
   gsl::final_action clear_packet{[this] { _packet.clear(); }};
 
-  auto const pulse_count{transmit(_packet)};
+  auto const pulse_count{transmit(_packet, times::zsu_blocks)};
 
   // Last packet transmitted successfully
   if (pulse_count == 2u && !--_block_count) reset();
@@ -174,7 +286,10 @@ std::optional<uint8_t> Base::zsuBlocks(uint8_t byte) {
   return pulse_count2response(pulse_count);
 }
 
+/// Reset
 ///
+/// \details Reset internal state to initial
+/// \return std::nullopt
 std::optional<uint8_t> Base::reset() {
   _packet.clear();
   _state = &Base::entry;
