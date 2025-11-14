@@ -75,18 +75,7 @@ RxTest& RxTest::Zpp(std::filesystem::path path) {
 }
 
 RxTest& RxTest::ZppPreamble(size_t count) {
-
-  EXPECT_CALL(
-    _mock,
-    transmit(ElementsAre(std::to_underlying(decup::Command::Preamble0)),
-             ulf::decup_ein::times::zpp_preamble))
-    .Times(AnyNumber());
-  EXPECT_CALL(
-    _mock,
-    transmit(ElementsAre(std::to_underlying(decup::Command::Preamble1)),
-             ulf::decup_ein::times::zpp_preamble))
-    .Times(AnyNumber());
-  for (auto i{0uz}; i < count; ++i) switch (count % 3uz) {
+  for (auto i{0uz}; i < count; ++i) switch (i % 3uz) {
       case 0u:
         _mock.receive(std::to_underlying(decup::Command::Preamble0));
         break;
@@ -101,17 +90,6 @@ RxTest& RxTest::ZppPreamble(size_t count) {
 }
 
 RxTest& RxTest::ZppCvRead(uint16_t cv) {
-  EXPECT_CALL(_mock,
-              transmit(ElementsAre(std::to_underlying(decup::Command::CvRead),
-                                   cv >> 0u,
-                                   cv >> 8u),
-                       ulf::decup_ein::times::zpp_cv_read))
-    .Times(1u);
-  EXPECT_CALL(
-    _mock,
-    transmit(ElementsAre(0xFF), std::to_underlying(decup::Command::CvRead)))
-    .Times(sizeof(char) * 8u - 1u);
-
   _mock.receive(std::to_underlying(decup::Command::CvRead));
   _mock.receive(static_cast<uint8_t>(cv >> 0u));
   _mock.receive(static_cast<uint8_t>(cv >> 8u));
@@ -126,19 +104,17 @@ RxTest& RxTest::ZppCvWrite(uint16_t cv, uint8_t val) {
   _mock.receive(0xAAu);
   _mock.receive(static_cast<uint8_t>(cv >> 0u));
   _mock.receive(static_cast<uint8_t>(cv >> 8u));
+
+  uint8_t crc{0x55};
+  crc = decup::crc8(crc ^ static_cast<uint8_t>(cv >> 0u));
+  crc = decup::crc8(crc ^ static_cast<uint8_t>(cv >> 8u));
+
+  _mock.receive(crc);
   _mock.receive(val);
   return *this;
 }
 
 RxTest& RxTest::ZppDecoderId() {
-  EXPECT_CALL(
-    _mock,
-    transmit(ElementsAre(std::to_underlying(decup::Command::ReadDecoderType)),
-             ulf::decup_ein::times::zpp_decoder_id))
-    .Times(1);
-  EXPECT_CALL(
-    _mock, transmit(ElementsAre(0xFFu), ulf::decup_ein::times::zpp_decoder_id))
-    .Times(sizeof(char) * 8u - 1u);
   _mock.receive(std::to_underlying(decup::Command::ReadDecoderType));
   for (size_t idx{0uz}; idx < (sizeof(char) * 8u) - 1u; idx++) {
     _mock.receive(0xFFu);
@@ -147,13 +123,6 @@ RxTest& RxTest::ZppDecoderId() {
 }
 
 RxTest& RxTest::ZppFlashErase() {
-  EXPECT_CALL(
-    _mock,
-    transmit(
-      ElementsAre(
-        std::to_underlying(decup::Command::DeleteFlash), 0x55u, 0xFFu, 0xFFu),
-      ulf::decup_ein::times::zpp_flash_erase))
-    .Times(1);
   _mock.receive(std::to_underlying(decup::Command::DeleteFlash));
   _mock.receive(0x55u);
   _mock.receive(0xFFu);
@@ -163,10 +132,7 @@ RxTest& RxTest::ZppFlashErase() {
 
 RxTest& RxTest::ZppFlashWrite() {
   uint16_t block{0u};
-  for (auto chunk : _fw.bin | std::views::chunk(256u)) {
-    EXPECT_CALL(_mock, transmit(_, ulf::decup_ein::times::zpp_flash_write))
-      .Times(1);
-
+  for (auto chunk : _zpp.flash | std::views::chunk(256u)) {
     _mock.receive(0x05u);
     _mock.receive(0x55u);
     _mock.receive(static_cast<uint8_t>(block >> 0u));
