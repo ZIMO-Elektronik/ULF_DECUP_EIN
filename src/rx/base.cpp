@@ -140,8 +140,9 @@ std::optional<uint8_t> Base::zppFlashErase(uint8_t byte) {
   if (size(_packet) == 4u && _packet[1uz] == 0x55u && _packet[2uz] == 0xFFu &&
       _packet[3uz] == 0xFFu) {
     _state = &Base::zpp;
-    return pulse_count2response(transmit(_packet, 200u * 1000u)); // 200s
-  }
+    return pulse_count2response(transmit(_packet, times::zpp_flash_erase));
+  } else if (size(_packet) >= 4u)
+    _state = &Base::zpp; // Incorrect security bytes
   return std::nullopt;
 }
 
