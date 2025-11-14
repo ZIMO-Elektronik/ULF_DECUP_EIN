@@ -13,3 +13,4 @@
 #include "decup_ein/ack.hpp"
 #include "decup_ein/nak.hpp"
 #include "decup_ein/rx/base.hpp"
+#include "decup_ein/window.hpp"
