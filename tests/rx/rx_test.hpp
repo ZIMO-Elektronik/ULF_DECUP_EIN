@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <zpp/zpp.hpp>
 #include <zsu/zsu.hpp>
 #include "rx_mock.hpp"
 
@@ -20,7 +21,18 @@ struct RxTest : ::testing::Test {
   RxTest* ZsuSecurityByte2();
   RxTest* ZsuBlocks();
 
+  RxTest* Zpp(std::filesystem::path path);
+  RxTest* ZppPreamble(size_t count);
+  RxTest* ZppDecoderId();
+  RxTest* ZppCvRead(uint16_t cv);
+  RxTest* ZppCvWrite(uint16_t cv, uint8_t val);
+  RxTest* ZppFlashErase();
+  RxTest* ZppFlashWrite();
+  RxTest* ZppCRCorXOR();
+
   NiceMock<RxMock> _mock;
   zsu::File _zsu;
   zsu::Firmware _fw;
+
+  zpp::File _zpp;
 };

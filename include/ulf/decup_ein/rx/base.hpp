@@ -15,16 +15,28 @@
 
 namespace ulf::decup_ein::rx {
 
-//
+/// Rx Base class
+///
+/// \details Pass data into the \ref receive(uint8_t) method to use. Doing this
+/// may result in a call to transmit
+///
+/// Calling reset() resets the internal state
 class Base {
 public:
   /// Dtor
   virtual constexpr ~Base() = default;
 
   std::optional<uint8_t> receive(uint8_t byte);
+  std::optional<uint8_t> reset();
 
 private:
-  virtual uint8_t transmit(std::span<uint8_t const> bytes) = 0;
+  /// Transmit bytes
+  ///
+  /// \param bytes    Bytes
+  /// \param timeout  Response timeout [us]
+  /// \return         Pulse count
+  virtual uint8_t transmit(std::span<uint8_t const> bytes,
+                           uint32_t timeout) = 0;
 
   std::optional<uint8_t> entry(uint8_t byte);
   std::optional<uint8_t> preamble(uint8_t byte);
@@ -32,7 +44,8 @@ private:
   std::optional<uint8_t> zpp(uint8_t byte);
   std::optional<uint8_t> zppReadCv(uint8_t byte);
   std::optional<uint8_t> zppWriteCv(uint8_t byte);
-  std::optional<uint8_t> zppFlash(uint8_t byte);
+  std::optional<uint8_t> zppFlashErase(uint8_t byte);
+  std::optional<uint8_t> zppFlashWrite(uint8_t byte);
   std::optional<uint8_t> zppDecoderId(uint8_t byte);
   std::optional<uint8_t> zppCrcXorQuery(uint8_t byte);
 
@@ -41,8 +54,6 @@ private:
   std::optional<uint8_t> zsuSecurityByte1(uint8_t byte);
   std::optional<uint8_t> zsuSecurityByte2(uint8_t byte);
   std::optional<uint8_t> zsuBlocks(uint8_t byte);
-
-  std::optional<uint8_t> reset();
 
   decup::Packet _packet{};
   std::optional<uint8_t> (Base::*_state)(uint8_t){&Base::entry};
