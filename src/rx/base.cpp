@@ -152,12 +152,12 @@ std::optional<uint8_t> Base::zppWriteCv(uint8_t byte) {
 /// \retval uint8_t       Pulse count
 std::optional<uint8_t> Base::zppFlashErase(uint8_t byte) {
   _packet.push_back(byte);
-  if (size(_packet) == 4u && _packet[1uz] == 0x55u && _packet[2uz] == 0xFFu &&
+  if (size(_packet) == 4uz && _packet[1uz] == 0x55u && _packet[2uz] == 0xFFu &&
       _packet[3uz] == 0xFFu) {
     _state = &Base::zpp;
     return pulse_count2response(
       transmit(_packet, decup::Timeouts::zpp_flash_erase));
-  } else if (size(_packet) >= 4u)
+  } else if (size(_packet) >= 4uz)
     _state = &Base::zpp; // Incorrect security bytes
   return std::nullopt;
 }
