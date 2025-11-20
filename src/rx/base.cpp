@@ -247,8 +247,13 @@ std::optional<uint8_t> Base::zsuBlockCount(uint8_t byte) {
   if (pulse_count == 1uz) {
     _state = &Base::zsuSecurityByte1;
     assert(byte > 8u + 1u);
-    _block_count = (byte - 8u + 1u) * // bootloader size is 8 blocks
-                   (256u / decup::decoder_id2data_size(_decoder_id));
+    auto const data_size{decup::decoder_id2data_size(_decoder_id)};
+    auto const bootloader_size{decup::decoder_id2bootloader_size(_decoder_id)};
+    // For some reason, for PIC16 decoders the normal calculation results in
+    // only half the actual block_count
+    auto const factor{data_size == 32uz ? 2uz : 1uz};
+    _block_count =
+      (((byte + 1u) * 256u - bootloader_size) / data_size) * factor;
   }
   return pulse_count2response(pulse_count);
 }
