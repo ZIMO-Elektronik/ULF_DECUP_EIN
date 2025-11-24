@@ -32,13 +32,14 @@ std::optional<uint8_t> Base::receive(uint8_t byte) {
 
 /// Reset
 ///
-/// Reset internal state to initial.
+/// Reset internal state to initial and reconfigure with 1 stop bit
 ///
 /// \return std::nullopt
 std::optional<uint8_t> Base::reset() {
   _packet.clear();
   _state = &Base::entry;
   _block_count = _decoder_id = 0u;
+  config(1u);
   return std::nullopt;
 }
 
@@ -71,6 +72,8 @@ std::optional<uint8_t> Base::preamble(uint8_t byte) {
       transmit({&byte, sizeof(byte)}, decup::Timeouts::zpp_preamble));
   // Continue with ZPP
   else if (byte < 0x80u) {
+    // Pretty sure, no decoder with ZPP causes problems with 2 stop bits
+    config(2u);
     _state = &Base::zpp;
     return zpp(byte);
   }
@@ -249,6 +252,7 @@ std::optional<uint8_t> Base::zsuBlockCount(uint8_t byte) {
     assert(byte > 8u + 1u);
     auto const data_size{decup::decoder_id2data_size(_decoder_id)};
     auto const bootloader_size{decup::decoder_id2bootloader_size(_decoder_id)};
+    config(data_size == 32uz ? 1u : 2u);
     // For some reason, for PIC16 decoders the normal calculation results in
     // only half the actual block_count
     auto const factor{data_size == 32uz ? 2uz : 1uz};
