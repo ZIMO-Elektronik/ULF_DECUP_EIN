@@ -9,4 +9,5 @@ struct RxMock : ulf::decup_ein::rx::Base {
               transmit,
               (std::span<uint8_t const>, uint32_t),
               (override));
+  MOCK_METHOD(void, config, (uint8_t), (override));
 };

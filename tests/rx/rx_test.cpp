@@ -60,7 +60,7 @@ RxTest* RxTest::ZsuBlocks() {
     .Times(Exactly(836))
     .WillRepeatedly(Return(2u));
   uint8_t count{0u};
-  for (auto chunk : _fw.bin | std::views::chunk(decup::decoder_id2data_size(
+  for (auto chunk : _fw.bin | std::views::chunk(decup::decoder_id2block_size(
                                 static_cast<uint8_t>(_fw.id)))) {
     _mock.receive(count);
     std::ranges::for_each(chunk, [this](uint8_t byte) { _mock.receive(byte); });
