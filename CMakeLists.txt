@@ -36,7 +36,7 @@ else()
 endif()
 
 if(NOT TARGET DECUP::DECUP)
-  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.6")
+  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.2.0")
 endif()
 
 if(NOT TARGET Microsoft.GSL::GSL)
