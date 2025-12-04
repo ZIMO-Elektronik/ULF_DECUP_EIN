@@ -41,7 +41,8 @@ private:
   /// Config
   ///
   /// (Re-)Configure UART transmit parameters.
-  /// \param stop_bits Stop bit count
+  ///
+  /// \param  stop_bits Stop bit count
   virtual void config(uint8_t stop_bits) = 0;
 
   std::optional<uint8_t> entry(uint8_t byte);
