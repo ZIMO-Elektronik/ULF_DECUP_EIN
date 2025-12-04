@@ -4,7 +4,7 @@ include(FetchContent)
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.10.0
+  GIT_TAG v0.12.0
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -36,7 +36,7 @@ else()
 endif()
 
 if(NOT TARGET DECUP::DECUP)
-  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.1.6")
+  cpmaddpackage("gh:ZIMO-Elektronik/DECUP@0.2.0")
 endif()
 
 if(NOT TARGET Microsoft.GSL::GSL)
@@ -54,6 +54,8 @@ if(PROJECT_IS_TOP_LEVEL)
     ${CMAKE_CURRENT_LIST_DIR}/.clang-format)
   file(GLOB_RECURSE SRC include/*.*pp tests/*.*pp)
   add_clang_format_target(ULF_DECUP_EINFormat OPTIONS -i FILES ${SRC})
+  add_include_what_you_must_target(ULF_DECUP_EINIncludeWhatYouMust TARGET
+                                   ULF_DECUP_EIN)
 endif()
 
 if(BUILD_TESTING

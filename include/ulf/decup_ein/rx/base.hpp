@@ -38,6 +38,13 @@ private:
   virtual uint8_t transmit(std::span<uint8_t const> bytes,
                            uint32_t timeout) = 0;
 
+  /// Config
+  ///
+  /// (Re-)Configure UART transmit parameters.
+  ///
+  /// \param  stop_bits Stop bit count
+  virtual void config(uint8_t stop_bits) = 0;
+
   std::optional<uint8_t> entry(uint8_t byte);
   std::optional<uint8_t> preamble(uint8_t byte);
 

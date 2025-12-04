@@ -32,13 +32,14 @@ std::optional<uint8_t> Base::receive(uint8_t byte) {
 
 /// Reset
 ///
-/// Reset internal state to initial.
+/// Reset internal state to initial and reconfigure with 1 stop bit
 ///
 /// \return std::nullopt
 std::optional<uint8_t> Base::reset() {
   _packet.clear();
   _state = &Base::entry;
   _block_count = _decoder_id = 0u;
+  config(1u);
   return std::nullopt;
 }
 
@@ -71,6 +72,8 @@ std::optional<uint8_t> Base::preamble(uint8_t byte) {
       transmit({&byte, sizeof(byte)}, decup::Timeouts::zpp_preamble));
   // Continue with ZPP
   else if (byte < 0x80u) {
+    // Pretty sure, no decoder with ZPP causes problems with 2 stop bits
+    config(2u);
     _state = &Base::zpp;
     return zpp(byte);
   }
@@ -243,12 +246,18 @@ std::optional<uint8_t> Base::zsuDecoderId(uint8_t byte) {
 /// \retval uint8_t       Pulse count
 std::optional<uint8_t> Base::zsuBlockCount(uint8_t byte) {
   auto const pulse_count{
-    transmit({&byte, sizeof(byte)}, decup::Timeouts::zsu_block_count)};
+    transmit({&byte, sizeof(byte)}, decup::Timeouts::zsu_page_count)};
   if (pulse_count == 1uz) {
     _state = &Base::zsuSecurityByte1;
     assert(byte > 8u + 1u);
-    _block_count = (byte - 8u + 1u) * // bootloader size is 8 blocks
-                   (256u / decup::decoder_id2data_size(_decoder_id));
+    auto const block_size{decup::decoder_id2block_size(_decoder_id)};
+    auto const bootloader_size{decup::decoder_id2bootloader_size(_decoder_id)};
+    config(bootloader_size == 256uz ? 1u : 2u);
+    // For some reason, for PIC16 decoders the normal calculation results in
+    // only half the actual block_count
+    auto const factor{bootloader_size == 256uz ? 2uz : 1uz};
+    _block_count =
+      (((byte + 1u) * 256u - bootloader_size) / block_size) * factor;
   }
   return pulse_count2response(pulse_count);
 }
@@ -300,7 +309,7 @@ std::optional<uint8_t> Base::zsuBlocks(uint8_t byte) {
   _packet.push_back(byte);
 
   // Not enough bytes
-  if (size(_packet) < decup::decoder_id2data_size(_decoder_id) + 2uz)
+  if (size(_packet) < decup::decoder_id2block_size(_decoder_id) + 2uz)
     return std::nullopt;
 
   // Whatever happens after that, clear the packet
