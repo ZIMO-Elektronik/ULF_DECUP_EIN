@@ -4,7 +4,7 @@ include(FetchContent)
 FetchContent_Declare(
   CMakeModules
   GIT_REPOSITORY "https://github.com/ZIMO-Elektronik/CMakeModules"
-  GIT_TAG v0.12.0
+  GIT_TAG v0.12.2
   SOURCE_DIR ${CMAKE_BINARY_DIR}/CMakeModules)
 FetchContent_MakeAvailable(CMakeModules)
 
@@ -40,7 +40,7 @@ if(NOT TARGET DECUP::DECUP)
 endif()
 
 if(NOT TARGET Microsoft.GSL::GSL)
-  cpmaddpackage("gh:microsoft/GSL@4.2.0")
+  cpmaddpackage("gh:microsoft/GSL@4.2.1")
 endif()
 
 target_link_libraries(ULF_DECUP_EIN PUBLIC DECUP::DECUP Microsoft.GSL::GSL)
