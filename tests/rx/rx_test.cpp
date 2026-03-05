@@ -1,6 +1,9 @@
 #include "rx_test.hpp"
+#include <array>
 #include <ranges>
 #include <ulf/decup_ein.hpp>
+
+using namespace testing;
 
 RxTest::RxTest() {}
 
@@ -149,5 +152,64 @@ RxTest& RxTest::ZppCRCorXOR() {
   for (size_t idx{0uz}; idx < (sizeof(char) * 8u) - 1u; idx++) {
     _mock.receive(0xFFu);
   }
+  return *this;
+}
+
+RxTest& RxTest::ZppCVSetCVWrite(uint16_t const cv, uint8_t const val) {
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet), // Command
+    static_cast<uint8_t>(std::to_underlying(decup::CvSetSubcommand::CvWrite) |
+                         ((cv >> 8u) & 0xFCu)), // Subcommand + cv MSB
+    static_cast<uint8_t>(cv),                   // Rest of CV address
+    val};                                       // Value
+  for (auto const byte : packet) _mock.receive(byte);
+  _mock.receive(decup::crc8(packet, 0xAA));
+  return *this;
+}
+
+RxTest& RxTest::ZppCVSetCVWriteStart() {
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),                // Command
+    std::to_underlying(decup::CvSetSubcommand::CvWriteStart), // Subcommand
+    0x00u,                                                    //
+    0x00u};                                                   //
+  for (auto const byte : packet) _mock.receive(byte);
+  _mock.receive(decup::crc8(packet, 0xAA));
+  return *this;
+}
+
+RxTest& RxTest::ZppCVSetCVWriteEnd() {
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),              // Command
+    std::to_underlying(decup::CvSetSubcommand::CvWriteEnd), // Subcommand
+    0x00u,                                                  //
+    0x00u};                                                 //
+  for (auto const byte : packet) _mock.receive(byte);
+  _mock.receive(decup::crc8(packet, 0xAA));
+  return *this;
+}
+
+RxTest& RxTest::ZppCVSetFeatureRequest() {
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),                  // Command
+    std::to_underlying(decup::CvSetSubcommand::FeatureRequest), // Subcommand
+    0x00u,                                                      //
+    0x00u};                                                     //
+  for (auto const byte : packet) _mock.receive(byte);
+  _mock.receive(decup::crc8(packet, 0xAA));
+  for (size_t idx{0uz}; idx < (sizeof(char) * 8u) - 1u; idx++) {
+    _mock.receive(0xFFu);
+  }
+  return *this;
+}
+
+RxTest& RxTest::ZppCVSetChangePage() {
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),              // Command
+    std::to_underlying(decup::CvSetSubcommand::ChangePage), // Subcommand
+    0x00u,                                                  //
+    0x00u};                                                 //
+  for (auto const byte : packet) _mock.receive(byte);
+  _mock.receive(decup::crc8(packet, 0xAA));
   return *this;
 }

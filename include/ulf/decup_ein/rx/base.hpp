@@ -55,6 +55,9 @@ private:
   std::optional<uint8_t> zppFlashWrite(uint8_t byte);
   std::optional<uint8_t> zppDecoderId(uint8_t byte);
   std::optional<uint8_t> zppCrcXorQuery(uint8_t byte);
+  std::optional<uint8_t> zppCvSet(uint8_t byte);
+  std::optional<uint8_t> zppCvSetManipulate(uint8_t byte);
+  std::optional<uint8_t> zppCvSetFeatureRequest(uint8_t byte);
 
   std::optional<uint8_t> zsuDecoderId(uint8_t byte);
   std::optional<uint8_t> zsuBlockCount(uint8_t byte);

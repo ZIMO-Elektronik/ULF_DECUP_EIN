@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- Add CV-Set command and subcommands to transmitter
+- Update DECUP to 0.2.1
+
 ## 0.2.0
 - Add `config(uint8_t stop_bits)` to allow changing UART stop bits on the fly
 - Update DECUP to 0.2.0

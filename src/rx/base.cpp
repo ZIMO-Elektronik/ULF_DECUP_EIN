@@ -17,9 +17,9 @@
 #include "nak.hpp"
 #include "pulse_count2response.hpp"
 
-namespace ulf::decup_ein::rx {
-
 using namespace std::literals;
+
+namespace ulf::decup_ein::rx {
 
 /// Receive single byte (from e.g. USB)
 ///
@@ -102,6 +102,7 @@ std::optional<uint8_t> Base::zpp(uint8_t byte) {
     case 0x05u: _state = &Base::zppFlashWrite; return zppFlashWrite(byte);
     case 0x04u: _state = &Base::zppDecoderId; return zppDecoderId(byte);
     case 0x07u: _state = &Base::zppCrcXorQuery; return zppCrcXorQuery(byte);
+    case 0x09u: _state = &Base::zppCvSet; return zppCvSet(byte);
   }
   return std::nullopt;
 }
@@ -215,6 +216,72 @@ std::optional<uint8_t> Base::zppCrcXorQuery(uint8_t byte) {
   auto const pulse_count{
     transmit({&byte, sizeof(byte)}, decup::Timeouts::zpp_crc_or_xor)};
   if (size(_packet) == 1uz + CHAR_BIT - 1uz) _state = &Base::zpp;
+  return pulse_count2response(pulse_count);
+}
+
+/// ZPP CvSet Command set
+///
+/// \note
+/// Dispatch to either zppCvSetManipulate or zppCvSetFeatureRequest
+///
+/// \param  byte          Byte
+/// \retval std::optional No result (yet)
+std::optional<uint8_t> Base::zppCvSet(uint8_t byte) {
+  // Check if command or subcommand
+  if (size(_packet) == 1uz) {
+    switch (byte & 0xFC) { // Bit 1..0 may be used otherwise
+      case std::to_underlying(decup::CvSetSubcommand::CvWrite): [[fallthrough]];
+      case std::to_underlying(decup::CvSetSubcommand::CvWriteStart):
+        [[fallthrough]];
+      case std::to_underlying(decup::CvSetSubcommand::CvWriteEnd):
+        [[fallthrough]];
+      case std::to_underlying(decup::CvSetSubcommand::ChangePage):
+        _state = &Base::zppCvSetManipulate;
+        return zppCvSetManipulate(byte);
+      case std::to_underlying(decup::CvSetSubcommand::FeatureRequest):
+        _state = &Base::zppCvSetFeatureRequest;
+        return zppCvSetFeatureRequest(byte);
+    }
+  }
+  _packet.push_back(byte);
+  return std::nullopt;
+}
+
+/// ZPP CvSet Manipulate
+///
+/// \note
+/// After transmission ---> ZPP
+///
+/// \param  byte          Byte
+/// \retval std::optional No result (yet)
+/// \retval uint8_t       Pulse count
+std::optional<uint8_t> Base::zppCvSetManipulate(uint8_t byte) {
+  _packet.push_back(byte);
+  if (size(_packet) == 5uz) {
+    _state = &Base::zpp;
+    return pulse_count2response(transmit(_packet, decup::Timeouts::zpp_cvset));
+  }
+  return std::nullopt;
+}
+
+/// ZPP CvSet Feature Request
+///
+/// \note
+/// After last transmission ---> ZPP
+///
+/// \param  byte          Byte
+/// \retval std::optional No result (yet)
+/// \retval uint8_t       Pulse count
+std::optional<uint8_t> Base::zppCvSetFeatureRequest(uint8_t byte) {
+  _packet.push_back(byte);
+  if (size(_packet) < 5uz) return std::nullopt;
+  else if (size(_packet) == 5uz)
+    // Packet
+    return pulse_count2response(transmit(_packet, decup::Timeouts::zpp_cvset));
+  // Dummy Bytes
+  auto const pulse_count{
+    transmit({&byte, sizeof(byte)}, decup::Timeouts::zpp_cvset)};
+  if (size(_packet) == 5uz + CHAR_BIT - 1uz) _state = &Base::zpp;
   return pulse_count2response(pulse_count);
 }
 
