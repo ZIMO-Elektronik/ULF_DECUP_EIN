@@ -1,11 +1,12 @@
+#include <array>
 #include <ranges>
 #include <string_view>
 #include "../utility.hpp"
 #include "rx_test.hpp"
 
-constexpr std::string_view path{"../../data/test.zpp"};
+using namespace testing;
 
-using testing::InSequence;
+constexpr std::string_view path{"../../data/test.zpp"};
 
 TEST_F(RxTest, zpp_preamble) {
   Zpp(source_location_parent_path() / path);
@@ -131,4 +132,124 @@ TEST_F(RxTest, zpp_crc_or_xor) {
   }
 
   ZppCRCorXOR();
+}
+
+TEST_F(RxTest, zpp_cvset_cv_write) {
+  Zpp(source_location_parent_path() / path);
+  ZppPreamble(100uz);
+
+  uint16_t const cv{8u - 1u};
+  uint8_t const val{145u};
+
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),
+    std::to_underlying(decup::CvSetSubcommand::CvWrite),
+    cv,
+    val};
+  auto const crc8{decup::crc8(packet, 0xAAu)};
+
+  {
+    InSequence s;
+    EXPECT_CALL(
+      _mock,
+      transmit(ElementsAre(packet[0], packet[1], packet[2], packet[3], crc8),
+               decup::Timeouts::zpp_cvset))
+      .Times(Exactly(1));
+  }
+
+  ZppCVSetCVWrite(cv, val);
+}
+
+TEST_F(RxTest, zpp_cvset_cv_write_start) {
+  Zpp(source_location_parent_path() / path);
+  ZppPreamble(100uz);
+
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),
+    std::to_underlying(decup::CvSetSubcommand::CvWriteStart),
+    0x00u,
+    0x00u};
+  auto const crc8{decup::crc8(packet, 0xAAu)};
+
+  {
+    InSequence s;
+    EXPECT_CALL(
+      _mock,
+      transmit(ElementsAre(packet[0], packet[1], packet[2], packet[3], crc8),
+               decup::Timeouts::zpp_cvset))
+      .Times(Exactly(1));
+  }
+
+  ZppCVSetCVWriteStart();
+}
+
+TEST_F(RxTest, zpp_cvset_cv_write_end) {
+  Zpp(source_location_parent_path() / path);
+  ZppPreamble(100uz);
+
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),
+    std::to_underlying(decup::CvSetSubcommand::CvWriteEnd),
+    0x00u,
+    0x00u};
+  auto const crc8{decup::crc8(packet, 0xAAu)};
+
+  {
+    InSequence s;
+    EXPECT_CALL(
+      _mock,
+      transmit(ElementsAre(packet[0], packet[1], packet[2], packet[3], crc8),
+               decup::Timeouts::zpp_cvset))
+      .Times(Exactly(1));
+  }
+
+  ZppCVSetCVWriteEnd();
+}
+
+TEST_F(RxTest, zpp_cvset_feature_request) {
+  Zpp(source_location_parent_path() / path);
+  ZppPreamble(100uz);
+
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),
+    std::to_underlying(decup::CvSetSubcommand::FeatureRequest),
+    0x00u,
+    0x00u};
+  auto const crc8{decup::crc8(packet, 0xAAu)};
+
+  {
+    InSequence s;
+    EXPECT_CALL(
+      _mock,
+      transmit(ElementsAre(packet[0], packet[1], packet[2], packet[3], crc8),
+               decup::Timeouts::zpp_cvset))
+      .Times(Exactly(1));
+    EXPECT_CALL(_mock, transmit(ElementsAre(0xFF), decup::Timeouts::zpp_cvset))
+      .Times(Exactly(sizeof(char) * 8u - 1u));
+  }
+
+  ZppCVSetFeatureRequest();
+}
+
+TEST_F(RxTest, zpp_cvset_change_page) {
+  Zpp(source_location_parent_path() / path);
+  ZppPreamble(100uz);
+
+  std::array<uint8_t, 4u> packet{
+    std::to_underlying(decup::Command::CvSet),
+    std::to_underlying(decup::CvSetSubcommand::ChangePage),
+    0x00u,
+    0x00u};
+  auto const crc8{decup::crc8(packet, 0xAAu)};
+
+  {
+    InSequence s;
+    EXPECT_CALL(
+      _mock,
+      transmit(ElementsAre(packet[0], packet[1], packet[2], packet[3], crc8),
+               decup::Timeouts::zpp_cvset))
+      .Times(Exactly(1));
+  }
+
+  ZppCVSetChangePage();
 }

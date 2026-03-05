@@ -6,10 +6,8 @@
 #include <zsu/zsu.hpp>
 #include "rx_mock.hpp"
 
-using namespace ::testing;
-
 // Receive test fixture
-struct RxTest : ::testing::Test {
+struct RxTest : testing::Test {
   RxTest();
   virtual ~RxTest();
 
@@ -29,8 +27,13 @@ struct RxTest : ::testing::Test {
   RxTest& ZppFlashErase();
   RxTest& ZppFlashWrite();
   RxTest& ZppCRCorXOR();
+  RxTest& ZppCVSetCVWrite(uint16_t const cv, uint8_t const val);
+  RxTest& ZppCVSetCVWriteStart();
+  RxTest& ZppCVSetCVWriteEnd();
+  RxTest& ZppCVSetFeatureRequest();
+  RxTest& ZppCVSetChangePage();
 
-  NiceMock<RxMock> _mock;
+  testing::NiceMock<RxMock> _mock;
   zsu::File _zsu;
   zsu::Firmware _fw;
 
